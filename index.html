@@ -173,6 +173,9 @@
     z-index: 1;
   }
 
+  /* sobald ein Foto hochgeladen ist, verschwindet das voreingestellte Bild */
+  .cap.filled .cap-overlay { display: none; }
+
   .remove {
     position: absolute;
     top: 2%;
@@ -240,9 +243,16 @@
   //  Neuen Button hinzufügen: Zeile kopieren, einfügen, id ändern.
   //  id      = eindeutiger Name (wird fürs Speichern des Bildes genutzt)
   //  overlay = URL deines Bildes ("" = kein Overlay)
-  //  blend   = "multiply" macht WEISSEN Hintergrund durchsichtig (für JPGs),
-  //            "normal" für echte transparente PNG/WebP
+  //
+  //  Ebenen pro Button (unten -> oben):
+  //    1. Button (Kronkorken)
+  //    2. DEIN hochgeladenes Foto (undurchsichtig)
+  //    3. overlay-Bild (TRANSPARENT, weißer Hintergrund wird automatisch entfernt)
+  //
+  //  keyOut  = false -> weißen Hintergrund NICHT entfernen (z.B. bei echten PNGs mit Alpha)
   //  opacity = optional, 0 bis 1 (z.B. 0.6 = halb durchsichtig)
+  //  blend   = optional, nur Fallback ("multiply"), falls der Browser das Bild
+  //            nicht auslesen darf (dann wird Weiß per Mischmodus ausgeblendet)
   // ============================================================
   var BUTTONS = [
     { id: "cap1", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/618MbCfdLzL._SL1448_.jpg" },
@@ -293,6 +303,62 @@
     try { localStorage.removeItem(keyOf(i)); } catch (e) {}
   }
 
+  // Entfernt den weißen Hintergrund (vom Rand aus) und gibt ein PNG mit Alpha zurück.
+  function removeWhiteBg(im) {
+    var s = Math.min(1, 600 / Math.max(im.naturalWidth, im.naturalHeight));
+    var w = Math.max(1, Math.round(im.naturalWidth * s));
+    var h = Math.max(1, Math.round(im.naturalHeight * s));
+    var cv = document.createElement("canvas");
+    cv.width = w; cv.height = h;
+    var ctx = cv.getContext("2d");
+    ctx.drawImage(im, 0, 0, w, h);
+    var d = ctx.getImageData(0, 0, w, h); // wirft Fehler, wenn das Bild nicht ausgelesen werden darf
+    var px = d.data, T = 232;
+    var seen = new Uint8Array(w * h), stack = [];
+    function isBg(p) {
+      var o = p * 4;
+      return px[o + 3] < 10 || (px[o] >= T && px[o + 1] >= T && px[o + 2] >= T);
+    }
+    function push(p) { if (!seen[p] && isBg(p)) { seen[p] = 1; stack.push(p); } }
+    var x, y;
+    for (x = 0; x < w; x++) { push(x); push((h - 1) * w + x); }
+    for (y = 0; y < h; y++) { push(y * w); push(y * w + w - 1); }
+    while (stack.length) {
+      var p = stack.pop();
+      px[p * 4 + 3] = 0;
+      var cx = p % w;
+      if (cx > 0) push(p - 1);
+      if (cx < w - 1) push(p + 1);
+      if (p >= w) push(p - w);
+      if (p < w * (h - 1)) push(p + w);
+    }
+    ctx.putImageData(d, 0, 0);
+    return cv.toDataURL("image/png");
+  }
+
+  function makeOverlay(cfg) {
+    var ov = document.createElement("img");
+    ov.className = "cap-overlay";
+    ov.alt = "";
+    if (cfg.opacity != null) ov.style.opacity = cfg.opacity;
+
+    function plain(blend) {
+      ov.style.mixBlendMode = blend;
+      ov.src = cfg.overlay;
+    }
+    if (cfg.keyOut === false) { plain(cfg.blend || "normal"); return ov; }
+
+    var probe = new Image();
+    probe.crossOrigin = "anonymous";
+    probe.onload = function () {
+      try { ov.src = removeWhiteBg(probe); }
+      catch (e) { plain(cfg.blend || "multiply"); }
+    };
+    probe.onerror = function () { plain(cfg.blend || "multiply"); };
+    probe.src = cfg.overlay;
+    return ov;
+  }
+
   function render(i, data) {
     var c = caps[i];
     if (data) {
@@ -337,13 +403,7 @@
       li.appendChild(btn);
 
       if (ALL[i].overlay) {
-        var ov = document.createElement("img");
-        ov.className = "cap-overlay";
-        ov.src = ALL[i].overlay;
-        ov.style.mixBlendMode = ALL[i].blend || "normal";
-        if (ALL[i].opacity != null) ov.style.opacity = ALL[i].opacity;
-        ov.alt = "";
-        li.appendChild(ov);
+        li.appendChild(makeOverlay(ALL[i]));
       }
       li.appendChild(rm);
       (i < BUTTONS.length ? grid : ownGrid).appendChild(li);
