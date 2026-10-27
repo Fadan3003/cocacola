@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coca-Cola</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Yellowtail&family=Barlow+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #e61a27;
+    --red-deep: #b30f1b;
+    --white: #ffffff;
+    --ink: #1a0b0c;
+    --cap-ring: #ffffff;
+    --cap-face: #fff6f4;
+    --plus: #e61a27;
+    --serif: "Yellowtail", "Brush Script MT", cursive;
+    --sans: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --red: #cf1522;
+      --red-deep: #8f0b15;
+      --cap-face: #f3e3e0;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --red: #cf1522;
+    --red-deep: #8f0b15;
+    --cap-face: #f3e3e0;
+    color-scheme: dark;
+  }
+
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: inherit; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--red);
+    color: var(--white);
+    font-family: var(--sans);
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    text-align: center;
+    padding: clamp(40px, 9vw, 96px) 20px 0;
+  }
+  h1 {
+    margin: 0;
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(64px, 17vw, 190px);
+    line-height: 1;
+    letter-spacing: 0.01em;
+    text-shadow: 0 4px 0 var(--red-deep);
+    transform: rotate(-3deg);
+    display: inline-block;
+  }
+  .tag {
+    margin: 18px auto 0;
+    font-size: clamp(18px, 3vw, 24px);
+    letter-spacing: 0.04em;
+    max-width: 36ch;
+    opacity: 0.95;
+  }
+
+  /* the dynamic ribbon */
+  .ribbon { display: block; width: 100%; height: clamp(40px, 7vw, 80px); margin-top: 28px; }
+  .ribbon path { fill: none; stroke: var(--white); stroke-linecap: round; }
+
+  main {
+    flex: 1;
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 24px 20px 40px;
+  }
+  .grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: clamp(18px, 3vw, 32px);
+    justify-items: center;
+  }
+
+  .section-title {
+    margin: clamp(44px, 8vw, 72px) 0 clamp(20px, 3vw, 28px);
+    text-align: center;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: clamp(34px, 6vw, 52px);
+    line-height: 1;
+    letter-spacing: .02em;
+    text-shadow: 0 3px 0 var(--red-deep);
+  }
+
+  /* bottle-cap button */
+  .cap {
+    position: relative;
+    width: min(100%, 210px);
+    aspect-ratio: 1;
+  }
+  .cap-btn {
+    appearance: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at center, var(--cap-face) 0 66%, transparent 66.5%),
+      repeating-conic-gradient(var(--cap-ring) 0 6deg, var(--red-deep) 6deg 12deg);
+    box-shadow: 0 8px 0 var(--red-deep), 0 14px 24px rgba(0,0,0,.25);
+    transition: transform .12s ease, box-shadow .12s ease;
+    overflow: hidden;
+    color: var(--plus);
+    font-family: var(--sans);
+  }
+  .cap-btn:hover { transform: translateY(-2px); }
+  .cap-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 var(--red-deep), 0 6px 12px rgba(0,0,0,.25); }
+  .cap-btn:focus-visible { outline: 4px solid var(--white); outline-offset: 5px; }
+
+  .plus {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-size: clamp(64px, 12vw, 104px);
+    font-weight: 600;
+    line-height: 1;
+    padding-bottom: .06em;
+  }
+  .cap-btn.has-img .plus { display: none; }
+
+  .cap-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: none;
+  }
+  .cap-btn.has-img .cap-img { display: block; }
+
+  /* overlay image: clipped to the round button */
+  .cap-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .remove {
+    position: absolute;
+    top: 2%;
+    right: 2%;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 3px solid var(--red);
+    background: var(--white);
+    color: var(--red);
+    font: 600 22px/1 var(--sans);
+    cursor: pointer;
+    display: none;
+    place-items: center;
+    padding: 0 0 2px;
+    box-shadow: 0 3px 8px rgba(0,0,0,.3);
+    z-index: 2;
+  }
+  .remove:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  .cap.filled .remove { display: grid; }
+
+  #status {
+    min-height: 1.5em;
+    text-align: center;
+    margin: 28px 0 0;
+    font-size: 18px;
+    letter-spacing: .02em;
+  }
+
+  footer {
+    text-align: center;
+    padding: 18px 20px 28px;
+    font-size: 16px;
+    opacity: .85;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cap-btn { transition: none; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Coca-Cola</h1>
+  </header>
+
+  <svg class="ribbon" viewBox="0 0 1200 80" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 50 C 150 10, 300 10, 450 40 S 750 75, 900 40 S 1100 15, 1200 35" stroke-width="14"/>
+  </svg>
+
+  <main>
+    <ul class="grid" id="grid"></ul>
+
+    <h2 class="section-title">Eigene</h2>
+    <ul class="grid" id="grid-own"></ul>
+    <p id="status" role="status" aria-live="polite"></p>
+  </main>
+
+  <input type="file" id="picker" accept="image/*" hidden>
+
+<script>
+(function () {
+  // ============================================================
+  //  BUTTONS: eine Zeile = ein Button.
+  //  Neuen Button hinzufügen: Zeile kopieren, einfügen, id ändern.
+  //  id      = eindeutiger Name (wird fürs Speichern des Bildes genutzt)
+  //  overlay = URL deines Bildes ("" = kein Overlay)
+  //  blend   = "multiply" macht WEISSEN Hintergrund durchsichtig (für JPGs),
+  //            "normal" für echte transparente PNG/WebP
+  //  opacity = optional, 0 bis 1 (z.B. 0.6 = halb durchsichtig)
+  // ============================================================
+  var BUTTONS = [
+    { id: "cap1", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/618MbCfdLzL._SL1448_.jpg" },
+    { id: "cap2", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/61JYMzIyChL._SL1500_.jpg" },
+    { id: "cap3", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/61vNxXRSXTL._SL1500_.jpg" },
+    { id: "cap4", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/51JdS-l+sjL._SL1500_.jpg" },
+    { id: "cap5", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/61IOuDyaN3L._SL1500_.jpg" },
+    { id: "cap6", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/61-Cpy+MQ2L._SL1500_.jpg" },
+    { id: "cap7", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/71+GcaikY-L._SL1500_.jpg" },
+    { id: "cap8", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/61K3qf2XGpL._SL1500_.jpg" },
+    { id: "cap9", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/71xj3Jun1YL._SL1500_.jpg" },
+    { id: "cap10", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/61HyIHwUOEL._SL1500_.jpg" },
+    { id: "cap11", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/71fJ0nu5lOL._SL1500_.jpg" },
+    { id: "cap12", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/61mbwAFkRKL._SL1500_.jpg" },
+    { id: "cap13", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/61uJz+rCtGL._SL1500_.jpg" },
+    { id: "cap14", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/71Qv51dcIrL._SL1500_.jpg" },
+    { id: "cap15", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/61lWp-7PxWL._SL1500_.jpg" },
+    { id: "cap16", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/61Lu-4lmgFL._SL1500_.jpg" },
+    { id: "cap17", blend: "multiply", overlay: "https://m.media-amazon.com/images/I/61OfdlHCQQL._SL1500_.jpg" },
+    { id: "cap18", blend: "multiply", overlay: "https://img.rewe-static.de/6359221/887830_digital-image.png?impolicy=s-products&imwidth=464" }
+  ];
+
+  // EIGENE: Buttons ohne Overlay, nur zum Hochladen eigener Fotos.
+  // Zahl ändern für mehr oder weniger Buttons.
+  var OWN_COUNT = 20;
+  var ALL = BUTTONS.slice();
+  for (var n = 1; n <= OWN_COUNT; n++) ALL.push({ id: "own" + n, overlay: "" });
+  var PREFIX = "cocacola:cap:";
+  var MAX_SIDE = 600;
+  var grid = document.getElementById("grid");
+  var ownGrid = document.getElementById("grid-own");
+  var picker = document.getElementById("picker");
+  var statusEl = document.getElementById("status");
+  var activeIndex = null;
+  var caps = [];
+
+  function say(msg) { statusEl.textContent = msg; }
+
+  function keyOf(i) { return PREFIX + ALL[i].id; }
+
+  function load(i) {
+    try { return localStorage.getItem(keyOf(i)); } catch (e) { return null; }
+  }
+  function save(i, data) {
+    try { localStorage.setItem(keyOf(i), data); return true; } catch (e) { return false; }
+  }
+  function drop(i) {
+    try { localStorage.removeItem(keyOf(i)); } catch (e) {}
+  }
+
+  function render(i, data) {
+    var c = caps[i];
+    if (data) {
+      c.img.src = data;
+      c.btn.classList.add("has-img");
+      c.wrap.classList.add("filled");
+      c.btn.setAttribute("aria-label", "Cap " + (i + 1) + ": change photo");
+    } else {
+      c.img.removeAttribute("src");
+      c.btn.classList.remove("has-img");
+      c.wrap.classList.remove("filled");
+      c.btn.setAttribute("aria-label", "Cap " + (i + 1) + ": add photo");
+    }
+  }
+
+  for (var i = 0; i < ALL.length; i++) {
+    (function (i) {
+      var li = document.createElement("li");
+      li.className = "cap";
+
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "cap-btn";
+
+      var plus = document.createElement("span");
+      plus.className = "plus";
+      plus.setAttribute("aria-hidden", "true");
+      plus.textContent = "+";
+
+      var img = document.createElement("img");
+      img.className = "cap-img";
+      img.alt = "";
+
+      var rm = document.createElement("button");
+      rm.type = "button";
+      rm.className = "remove";
+      rm.setAttribute("aria-label", "Remove photo from cap " + (i + 1));
+      rm.textContent = "\u00d7";
+
+      btn.appendChild(plus);
+      btn.appendChild(img);
+      li.appendChild(btn);
+
+      if (ALL[i].overlay) {
+        var ov = document.createElement("img");
+        ov.className = "cap-overlay";
+        ov.src = ALL[i].overlay;
+        ov.style.mixBlendMode = ALL[i].blend || "normal";
+        if (ALL[i].opacity != null) ov.style.opacity = ALL[i].opacity;
+        ov.alt = "";
+        li.appendChild(ov);
+      }
+      li.appendChild(rm);
+      (i < BUTTONS.length ? grid : ownGrid).appendChild(li);
+
+      caps[i] = { wrap: li, btn: btn, img: img };
+
+      btn.addEventListener("click", function () {
+        activeIndex = i;
+        picker.value = "";
+        picker.click();
+      });
+      rm.addEventListener("click", function () {
+        drop(i);
+        render(i, null);
+        say("Photo removed.");
+      });
+
+      render(i, load(i));
+    })(i);
+  }
+
+  function shrink(file, cb) {
+    var reader = new FileReader();
+    reader.onerror = function () { cb(null); };
+    reader.onload = function () {
+      var im = new Image();
+      im.onerror = function () { cb(null); };
+      im.onload = function () {
+        var s = Math.min(1, MAX_SIDE / Math.max(im.width, im.height));
+        var w = Math.round(im.width * s), h = Math.round(im.height * s);
+        var cv = document.createElement("canvas");
+        cv.width = w; cv.height = h;
+        cv.getContext("2d").drawImage(im, 0, 0, w, h);
+        cb(cv.toDataURL("image/jpeg", 0.82));
+      };
+      im.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  picker.addEventListener("change", function () {
+    var file = picker.files && picker.files[0];
+    var i = activeIndex;
+    if (!file || i === null) return;
+    if (file.type.indexOf("image/") !== 0) { say("Please choose an image file."); return; }
+    say("Saving\u2026");
+    shrink(file, function (data) {
+      if (!data) { say("That image couldn\u2019t be read. Try a different file."); return; }
+      if (save(i, data)) {
+        render(i, data);
+        say("Saved to cap " + (i + 1) + ".");
+      } else {
+        render(i, data);
+        say("Shown, but browser storage is full or blocked, so it won\u2019t be kept after a reload.");
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
